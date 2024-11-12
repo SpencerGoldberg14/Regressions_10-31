@@ -152,6 +152,7 @@ ggplot() +
   labs(x="year", y="Evapotranspiration (in)")
 
 # start of HW
+# question 1
 # recommended CO2 transformation
 ghg <- read.csv("/cloud/project/Deemer_GHG_Data.csv")
 ghg$co2 <- 1/(ghg$co2+1000)
@@ -195,3 +196,28 @@ reg.data <- data.frame(ghg$airTemp,
 
 # make a correlation matrix 
 chart.Correlation(reg.data, histogram=TRUE, pch=19)
+
+# question 2
+# decompose the evapotranspiration time series for almonds
+# average fields for each month for almonds
+almond <- ETdat %>% 
+  filter(crop == "Almonds") %>% 
+  group_by(date) %>% 
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE))
+# visualize the data
+ggplot(almond, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# almond ET time series
+almond_ts <- ts(almond$ET.in, 
+                start = c(2016,1), 
+                frequency= 12) 
+
+# decompose almond ET time series
+almond_dec <- decompose(almond_ts)
+# plot decomposition
+plot(almond_dec)
+
+
