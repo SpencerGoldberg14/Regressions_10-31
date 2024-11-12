@@ -157,10 +157,41 @@ ghg <- read.csv("/cloud/project/Deemer_GHG_Data.csv")
 ghg$co2 <- 1/(ghg$co2+1000)
 ghg$co2
 
+# transform variables that are predicted to impact CO2 most
+ghg$log.age <- log(ghg$age)
+ghg$log.DIP <- log(ghg$DIP+1)
+ghg$log.precip <- log(ghg$precipitation)
+
 # multiple regression
 # creates a model object
-mod.full <- lm(log.ch4 ~ airTemp+
+mod.full <- lm(ghg$co2 ~ airTemp+
                  log.age+mean.depth+
                  log.DIP+
-                 log.precip+ BorealV, data=ghg) 
+                 log.precip+
+                 log.airTemp, data=ghg) 
+summary(mod.full)
 
+# checking assumptions
+res.full <- rstandard(mod.full)
+fit.full <- fitted.values(mod.full)
+
+# check for normality
+# qq plot
+qqnorm(res.full, pch=19, col="grey50")
+qqline(res.full)
+# shapiro-wilks test
+shapiro.test(res.full)
+
+# check residuals from assumptions 2-4
+plot(fit.full,res.full, pch=19, col="grey50")
+abline(h=0)
+
+# check for multicollinearity 
+# isolate continuous model variables into data frame:
+reg.data <- data.frame(ghg$airTemp,
+                       ghg$log.age,ghg$mean.depth,
+                       ghg$log.DIP,
+                       ghg$log.precip)
+
+# make a correlation matrix 
+chart.Correlation(reg.data, histogram=TRUE, pch=19)
