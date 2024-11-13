@@ -150,7 +150,7 @@ ggplot() +
                   ymax=Hi.95), fill=rgb(0.5,0.5,0.5,0.5))+ 
   theme_classic()+
   labs(x="year", y="Evapotranspiration (in)")
-
+--------------------------------------------------------------
 # start of HW
 # question 1
 # recommended CO2 transformation
@@ -166,10 +166,10 @@ ghg$log.precip <- log(ghg$precipitation)
 # multiple regression
 # creates a model object
 mod.full <- lm(ghg$co2 ~ airTemp+
-                 log.age+mean.depth+
+                 log.age+
+                 mean.depth+
                  log.DIP+
-                 log.precip+
-                 log.airTemp, data=ghg) 
+                 log.precip,data=ghg) 
 summary(mod.full)
 
 # checking assumptions
@@ -180,8 +180,6 @@ fit.full <- fitted.values(mod.full)
 # qq plot
 qqnorm(res.full, pch=19, col="grey50")
 qqline(res.full)
-# shapiro-wilks test
-shapiro.test(res.full)
 
 # check residuals from assumptions 2-4
 plot(fit.full,res.full, pch=19, col="grey50")
@@ -219,5 +217,193 @@ almond_ts <- ts(almond$ET.in,
 almond_dec <- decompose(almond_ts)
 # plot decomposition
 plot(almond_dec)
+
+# decompose the evapotranspiration time series for pistachios
+# average fields for each month for pistachios
+pistachios <- ETdat %>% 
+  filter(crop == "Pistachios") %>% 
+  group_by(date) %>% 
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE))
+# visualize the data
+ggplot(pistachios, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# pistachios ET time series
+pistachios_ts <- ts(pistachios$ET.in, 
+                start = c(2016,1), 
+                frequency= 12) 
+
+# decompose pistachios ET time series
+pistachios_dec <- decompose(almond_ts)
+# plot decomposition
+plot(pistachios_dec)
+
+# decompose the evapotranspiration time series for Fallow/Idle Cropland
+# average fields for each month for Fallow/Idle Cropland
+Fallow_Idle <- ETdat %>% 
+  filter(crop == "Fallow/Idle Cropland") %>% 
+  group_by(date) %>% 
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE))
+# visualize the data
+ggplot(Fallow_Idle, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# Fallow/Idle Cropland ET time series
+Fallow_Idle_ts <- ts(Fallow_Idle$ET.in, 
+                    start = c(2016,1), 
+                    frequency= 12) 
+
+# decompose Fallow/Idle Cropland ET time series
+Fallow_Idle_dec <- decompose(Fallow_Idle_ts)
+# plot decomposition
+plot(Fallow_Idle_dec)
+
+nrow(Fallow_Idle)
+
+# decompose the evapotranspiration time series for corn
+# average fields for each month for corn
+corn <- ETdat %>% 
+  filter(crop == "Corn") %>% 
+  group_by(date) %>% 
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE))
+# visualize the data
+ggplot(corn, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# corn ET time series
+corn_ts <- ts(corn$ET.in, 
+                start = c(2016,1), 
+                frequency= 12) 
+
+# decompose corn ET time series
+corn_dec <- decompose(corn_ts)
+# plot decomposition
+plot(corn_dec)
+
+# decompose the evapotranspiration time series for grapes
+# average fields for each month for grapes
+grape <- ETdat %>% 
+  filter(crop == "Grapes (Table/Raisin)") %>% 
+  group_by(date) %>% 
+  summarise(ET.in = mean(Ensemble.ET, na.rm=TRUE))
+# visualize the data
+ggplot(grape, aes(x=ymd(date),y=ET.in))+
+  geom_point()+
+  geom_line()+
+  labs(x="year", y="Monthy evapotranspiration (in)")
+
+# grape ET time series
+grape_ts <- ts(grape$ET.in, 
+                start = c(2016,1), 
+                frequency= 12) 
+
+# decompose grape ET time series
+grape_dec <- decompose(grape_ts)
+# plot decomposition
+plot(grape_dec)
+
+# question 3
+# autoregressive model for pistachios
+pistachios_y <- na.omit(pistachios_ts)
+model1 <- arima(pistachios_y , 
+                order = c(1,0,0)) 
+model1
+
+# try running a 4th order AR
+model4 <- arima(pistachios_y , 
+                order = c(4,0,0)) 
+model4
+
+# calculate fit
+AR_fit1 <- pistachios_y - residuals(model1) 
+AR_fit4 <- pistachios_y - residuals(model4)
+#plot data
+plot(pistachios_y)
+# plot fit
+points(AR_fit1, type = "l", col = "tomato3", lty = 2, lwd=2)
+points(AR_fit4, type = "l", col = "blue", lty = 2, lwd=2)
+legend("topleft", c("data","AR1","AR4"),
+       lty=c(1,2,2), lwd=c(1,2,2), 
+       col=c("black", "tomato3","blue"),
+       bty="n")
+
+# forecast future pistachio evapotranspiration 
+newPistachios <- forecast(model4)
+newPistachios
+
+#make dataframe for plotting
+newPistachiosF <- data.frame(newPistachios)
+
+# set up dates
+years <- c(rep(2021,4),rep(2022,12), rep(2023,8))
+month <- c(seq(9,12),seq(1,12), seq(1,8))
+newPistachiosF$dateF <- ymd(paste(years,"/",month,"/",1))
+
+# make a plot with data and predictions including a prediction interval
+ggplot() +
+  geom_line(data = pistachios, aes(x = ymd(date), y = ET.in))+
+  xlim(ymd(pistachios$date[1]),newPistachiosF$dateF[24])+  
+  geom_line(data = newAlmondF, aes(x = dateF, y = Point.Forecast),
+            col="red") +  
+  geom_ribbon(data=newPistachiosF, 
+              aes(x=dateF,ymin=Lo.95,
+                  ymax=Hi.95), fill=rgb(0.5,0.5,0.5,0.5))+ 
+  theme_classic()+
+  labs(x="year", y="Evapotranspiration (in)")
+
+# autoregressive model for fallow/idle fields
+Fallow_Idle_y <- na.omit(Fallow_Idle_ts)
+model1a <- arima(Fallow_Idle_y , 
+                order = c(1,0,0)) 
+model1a
+
+# try running a 4th order AR
+model6a <- arima(Fallow_Idle_y , 
+                order = c(6,0,0)) 
+model6a
+
+# calculate fit
+AR_fit1a <- Fallow_Idle_y - residuals(model1a) 
+AR_fit6a <- Fallow_Idle_y - residuals(model6a)
+#plot data
+plot(Fallow_Idle_y)
+# plot fit
+points(AR_fit1a, type = "l", col = "tomato3", lty = 2, lwd=2)
+points(AR_fit6a, type = "l", col = "blue", lty = 2, lwd=2)
+legend("topleft", c("data","AR1","AR6"),
+       lty=c(1,2,2), lwd=c(1,2,2), 
+       col=c("black", "tomato3","blue"),
+       bty="n")
+
+# forecast future pistachio evapotranspiration 
+newFallow_Idle <- forecast(model6a)
+newFallow_Idle
+
+#make dataframe for plotting
+newFallow_IdleF <- data.frame(newFallow_Idle)
+
+# set up dates
+years <- c(rep(2021,4),rep(2022,12), rep(2023,8))
+month <- c(seq(9,12),seq(1,12), seq(1,8))
+newFallow_IdleF$dateF <- ymd(paste(years,"/",month,"/",1))
+
+# make a plot with data and predictions including a prediction interval
+ggplot() +
+  geom_line(data = Fallow_Idle, aes(x = ymd(date), y = ET.in))+
+  xlim(ymd(Fallow_Idle$date[1]), newFallow_IdleF$dateF[24])+  
+  geom_line(data = newFallow_IdleF, aes(x = dateF, y = Point.Forecast),
+            col="red") +  
+  geom_ribbon(data=newFallow_IdleF, 
+              aes(x=dateF,ymin=Lo.95,
+                  ymax=Hi.95), fill=rgb(0.5,0.5,0.5,0.5))+ 
+  theme_classic()+
+  labs(x="year", y="Evapotranspiration (in)")
+
 
 
