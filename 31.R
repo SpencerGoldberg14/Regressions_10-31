@@ -262,8 +262,6 @@ Fallow_Idle_dec <- decompose(Fallow_Idle_ts)
 # plot decomposition
 plot(Fallow_Idle_dec)
 
-nrow(Fallow_Idle)
-
 # decompose the evapotranspiration time series for corn
 # average fields for each month for corn
 corn <- ETdat %>% 
