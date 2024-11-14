@@ -362,25 +362,25 @@ model1a <- arima(Fallow_Idle_y ,
 model1a
 
 # try running a 4th order AR
-model6a <- arima(Fallow_Idle_y , 
+model4a <- arima(Fallow_Idle_y , 
                 order = c(6,0,0)) 
-model6a
+model4a
 
 # calculate fit
 AR_fit1a <- Fallow_Idle_y - residuals(model1a) 
-AR_fit6a <- Fallow_Idle_y - residuals(model6a)
+AR_fit4a <- Fallow_Idle_y - residuals(model4a)
 #plot data
 plot(Fallow_Idle_y)
 # plot fit
 points(AR_fit1a, type = "l", col = "tomato3", lty = 2, lwd=2)
-points(AR_fit6a, type = "l", col = "blue", lty = 2, lwd=2)
-legend("topleft", c("data","AR1","AR6"),
+points(AR_fit4a, type = "l", col = "blue", lty = 2, lwd=2)
+legend("topleft", c("data","AR1","AR4"),
        lty=c(1,2,2), lwd=c(1,2,2), 
        col=c("black", "tomato3","blue"),
        bty="n")
 
-# forecast future pistachio evapotranspiration 
-newFallow_Idle <- forecast(model6a)
+# forecast future fallow/idle fields evapotranspiration 
+newFallow_Idle <- forecast(model4a)
 newFallow_Idle
 
 #make dataframe for plotting
@@ -402,6 +402,3 @@ ggplot() +
                   ymax=Hi.95), fill=rgb(0.5,0.5,0.5,0.5))+ 
   theme_classic()+
   labs(x="year", y="Evapotranspiration (in)")
-
-
-
